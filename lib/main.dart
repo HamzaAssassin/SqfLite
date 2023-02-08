@@ -88,10 +88,11 @@ class _MyHomePageState extends State<MyHomePage> {
     super.didChangeDependencies();
     getStudents();
   }
-
+final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text(widget.title),
         centerTitle: true,
@@ -202,7 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
+                      SizedBox(
                         height: height * 0.07,
                         width: width * 0.3,
                         child: FittedBox(
@@ -261,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               feeUpdateController.clear();
                               my.getStudents();
 
-                              Navigator.of(context).pop();
+                              _popDialog();
                             }
                           }
                         },
@@ -281,9 +282,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _addStudentDialog(_MyHomePageState my) async {
     return showDialog<void>(
       barrierDismissible: false,
+      
       context: context,
-      builder: (context) {
-        var screensize = MediaQuery.of(context).size;
+      builder: (dialogContext) {
+        var screensize = MediaQuery.of(dialogContext).size;
         var height = screensize.height;
         var width = screensize.width;
 
@@ -291,7 +293,7 @@ class _MyHomePageState extends State<MyHomePage> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
           child: SingleChildScrollView(
-            child: Container(
+            child: SizedBox(
               height: height * 0.6,
               width: width * 0.8,
               child: Padding(
@@ -301,7 +303,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
+                      SizedBox(
                         height: height * 0.07,
                         width: width * 0.3,
                         child: const FittedBox(
@@ -388,7 +390,10 @@ class _MyHomePageState extends State<MyHomePage> {
                               rollNoController.clear();
                               my.getStudents();
 
-                              Navigator.of(context).pop();
+                              _popDialog();
+                            } else {
+                              _popDialog();
+                              _showSnackBar("Roll No Already Exist");
                             }
                           }
                         },
@@ -402,6 +407,18 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       },
+    );
+  }
+
+  void _popDialog() {
+    Navigator.pop(context);
+  }
+
+  void _showSnackBar(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+      ),
     );
   }
 
@@ -441,7 +458,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 bool isDeleted = await studentProvider.deleteStudent(student);
                 if (isDeleted) {
                   getStudents();
-                  Navigator.of(context).pop();
+                  _popDialog();
                 }
               },
             ),
