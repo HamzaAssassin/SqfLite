@@ -25,6 +25,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
+extension ExtString on String {
+  bool get isValidPhone {
+    final phoneRegExp = RegExp(r"[0-9]");
+    return phoneRegExp.hasMatch(this);
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -88,7 +95,8 @@ class _MyHomePageState extends State<MyHomePage> {
     super.didChangeDependencies();
     getStudents();
   }
-final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,18 +259,23 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
                       ElevatedButton(
                         onPressed: () async {
                           if (key.currentState!.validate()) {
-                            bool isUpdate = await studentProvider.updateStudent(
-                                Student(
-                                    rollNo: student.rollNo,
-                                    name: nameUpdateController.text,
-                                    fee: double.parse(
-                                        feeUpdateController.text)));
-                            if (isUpdate) {
-                              nameUpdateController.clear();
-                              feeUpdateController.clear();
-                              my.getStudents();
+                            try {
+                              bool isUpdate =
+                                  await studentProvider.updateStudent(Student(
+                                      rollNo: student.rollNo,
+                                      name: nameUpdateController.text,
+                                      fee: double.parse(
+                                          feeUpdateController.text)));
+                              if (isUpdate) {
+                                nameUpdateController.clear();
+                                feeUpdateController.clear();
+                                my.getStudents();
 
+                                _popDialog();
+                              }
+                            } on Exception catch (e) {
                               _popDialog();
+                              _showSnackBar(e.toString());
                             }
                           }
                         },
@@ -282,7 +295,6 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Future<void> _addStudentDialog(_MyHomePageState my) async {
     return showDialog<void>(
       barrierDismissible: false,
-      
       context: context,
       builder: (dialogContext) {
         var screensize = MediaQuery.of(dialogContext).size;
@@ -328,7 +340,9 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
                         validator: (String? value) {
                           return (value!.isEmpty)
                               ? 'Field Cannot be Empty.'
-                              : null;
+                              : !value.isValidPhone
+                                  ? "Please Enter correct format of fee"
+                                  : null;
                         },
                       ),
                       SizedBox(
@@ -379,21 +393,26 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
                         focusNode: _focusNodeSubmit,
                         onPressed: () async {
                           if (key.currentState!.validate()) {
-                            bool isInsertd =
-                                await studentProvider.insertStudent(Student(
-                                    rollNo: int.parse(rollNoController.text),
-                                    name: nameController.text,
-                                    fee: double.parse(feeController.text)));
-                            if (isInsertd) {
-                              nameController.clear();
-                              feeController.clear();
-                              rollNoController.clear();
-                              my.getStudents();
+                            try {
+                              bool isInsertd =
+                                  await studentProvider.insertStudent(Student(
+                                      rollNo: int.parse(rollNoController.text),
+                                      name: nameController.text,
+                                      fee: double.parse(feeController.text)));
+                              if (isInsertd) {
+                                nameController.clear();
+                                feeController.clear();
+                                rollNoController.clear();
+                                my.getStudents();
 
+                                _popDialog();
+                              } else {
+                                _popDialog();
+                                _showSnackBar("Roll No Already Exist");
+                              }
+                            } on Exception catch (e) {
                               _popDialog();
-                            } else {
-                              _popDialog();
-                              _showSnackBar("Roll No Already Exist");
+                              _showSnackBar(e.toString());
                             }
                           }
                         },
